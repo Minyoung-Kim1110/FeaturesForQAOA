@@ -1,32 +1,81 @@
+"""distance map and quantum feature map implemented 
+
+"""
 import numpy as np
 
-cosftn = lambda x, y : np.dot(x, y)/ norm(x)/norm(y)
-Euclidean = lambda x, y : np.sqrt(np.dot(x-y, x-y))
+def norm(x:np.array):
+    """get L2 norm 
 
-#Euclidean distance 
-def norm(x):
+    Args:
+        x (np.array): vector
+
+    Returns:
+        magnitude of x (sum(x^2))^(1/2)
+    """
     return np.sqrt(np.dot(x, x))
 
-def cos_dist(x, y):
-    #actually, negative cos function 
-    return -np.dot(x, y)/ norm(x)/norm(y)
+def sin_dist(x:np.array, y:np.array):
+    """get sin distance of two vectors
 
-def L2(x, y):
-    #Euclidean distance
+    Args:
+        x (np.array): vector
+        y (np.array): another vector same size with x
+
+    Returns:
+        float: sqrt(1- cos^2) 
+    """
+    return np.sqrt(1-(np.dot(x, y)/ norm(x)/norm(y))**2)
+
+def L2(x:np.array, y:np.array):
+    """get L2 distance(Euclidean distance) of two vectors
+
+    Args:
+        x (np.array): vector
+        y (np.array): another vector same size with x
+
+    Returns:
+        float : sqrt[sum{(x-y)**2}]
+    """
     return norm(x-y)
 
-def L1(x, y):
-    #Manhattan distance 
-    return np.sum(np.abs(x-y))
+def L1(x:np.array, y:np.array):
+    """get L1 distance(Manhattan distance) of two vectors
 
-distance_func_list = [ cos_dist, L2, L1 ]
+    Args:
+        x (np.array): vector
+        y (np.array): another vector same size with x
+
+    Returns:
+        float: mean(abs(x-y))
+    """
+    return np.mean(np.abs(x-y))
+    
+#Commonly used functions to calculate distance in feature space 
+distance_func_list = [sin_dist, L2, L1 ]
 
 class QuantumKernelMap():
+    """Quantum Kernel map construction
+    """
     def __init__(self, backend):
+        """construct function of quantum kernel map class
+
+        Args:
+            backend (_type_): set backend for quantum circuit
+        """
         self.backend = backend
 
     def run(data:np.array):
+        """from given data, get quantum kernel
+        
+
+        Args:
+            data (np.array): N by M matrix, N: number of data points, M: number of features
+
+        Returns:
+            adjacency matrix(np.array)
+        """
         num_datapt, num_features = data.shape
         feature_map =ZZFeatureMap(feature_dimension=num_features, reps=2, entanglement="linear")
         kernel = QuantumKernel(feature_map=feature_map, quantum_instance=self.backend)
-        return kernel.evaluate(data)
+        ret = kernel.evaluate(data)
+        return np.ones_like(ret)-ret
