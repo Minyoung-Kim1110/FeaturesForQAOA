@@ -8,6 +8,7 @@ import networkx as nx
 
 from qiskit import QuantumCircuit
 from qiskit import Aer
+from graph import *
 
 def cut(x: str, graph: nx.Graph):
     """
@@ -116,7 +117,12 @@ if __name__ == "__main__":
         return graph
 
     from scipy.optimize import minimize
-    graph = get_example_graph()
+
+    sample_data = np.ones((4, 3)) #data # = 2, 3 features 
+    cosftn = lambda x, y : np.dot(x, y) # sample distance function 
+    graph = generate_graph(sample_data, cosftn)
+    
+    #graph = get_example_graph()
     params = [1.0, 1.0, 1.0, 1.0]
     qaoa = Qaoa(graph)
 
