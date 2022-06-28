@@ -109,7 +109,7 @@ class Qaoa:
         #                     nshots=self.shots).result().get_counts()
         transpiled_circuit = transpile(qc, self.backend, optimization_level=3)
         job = self.backend.run(transpiled_circuit)
-        job_monitor(job, interval=2)
+        # job_monitor(job, interval=2)
 
         results = job.result()
         counts = results.get_counts()
