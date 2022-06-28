@@ -8,7 +8,8 @@ def norm(x):
     return np.sqrt(np.dot(x, x))
 
 def cos_dist(x, y):
-    return np.dot(x, y)/ norm(x)/norm(y)
+    #actually, negative cos function 
+    return -np.dot(x, y)/ norm(x)/norm(y)
 
 def L2(x, y):
     #Euclidean distance

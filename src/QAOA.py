@@ -118,12 +118,17 @@ if __name__ == "__main__":
 
     from scipy.optimize import minimize
 
-    sample_data = np.ones((4, 3)) #data # = 2, 3 features 
-    cosftn = lambda x, y : np.dot(x, y) # sample distance function 
-    graph = generate_graph(sample_data, cosftn)
+    data = np.load("../data/drug145_5.npy")
+    data = data[:4, 1:]
+    def norm(x):
+        return np.sqrt(np.dot(x,x))
+    cosftn = lambda x, y : np.dot(x, y)/ norm(x)/norm(y)
+    Euclidean = lambda x, y : np.sqrt(np.dot(x-y, x-y))
+    graph = generate_graph(data, cosftn)
     
     #graph = get_example_graph()
-    params = [1.0, 1.0, 1.0, 1.0]
+    #params length = 2p 
+    params = [1.0, 1.0]
     qaoa = Qaoa(graph)
 
     res = minimize(qaoa.execute_circ, 
