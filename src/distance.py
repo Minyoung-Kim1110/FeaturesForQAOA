@@ -3,6 +3,11 @@
 """
 import numpy as np
 
+from qiskit_machine_learning.kernels import QuantumKernel
+from qiskit import BasicAer
+from qiskit.circuit.library import ZZFeatureMap
+from qiskit.utils import QuantumInstance, algorithm_globals
+
 def norm(x:np.array):
     """get L2 norm 
 
@@ -64,7 +69,7 @@ class QuantumKernelMap():
         """
         self.backend = backend
 
-    def run(data:np.array):
+    def run(self, data:np.array):
         """from given data, get quantum kernel
         
 
@@ -78,4 +83,5 @@ class QuantumKernelMap():
         feature_map =ZZFeatureMap(feature_dimension=num_features, reps=2, entanglement="linear")
         kernel = QuantumKernel(feature_map=feature_map, quantum_instance=self.backend)
         ret = kernel.evaluate(data)
+        np.save("./mat.npy", np.ones_like(ret) - ret)
         return np.ones_like(ret)-ret
