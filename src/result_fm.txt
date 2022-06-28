@@ -1,0 +1,9 @@
+data number=3 p = 1, distance function = QuantumKernelMap
+     fun: -1.8055
+   maxcv: 0.0
+ message: 'Optimization terminated successfully.'
+    nfev: 28
+  status: 1
+ success: True
+       x: array([2.80393819, 0.35530096])
+========================================================================================================
