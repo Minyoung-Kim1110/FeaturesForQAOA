@@ -23,10 +23,15 @@ def generate_graph(data, distftn, draw=True):
         for j in range(node_num):
             if i==j: continue
             else: adjacency_mat[i,j]+=distftn(data[i], data[j])
+    graph = generate_graph_from_numpy(adjacency_mat, draw = draw)
+    return graph 
+    
+def generate_graph_from_numpy(adjacency_mat, draw = True):
     graph = nx.from_numpy_matrix(adjacency_mat)
     if draw: 
         layout = nx.random_layout(graph, seed = 10 )
-        labels = nx.get_edge_attributes(graph, 'weight')
+        labels = dict([((u,v,), f"{d['weight']:.3f}") for u,v,d in graph.edges(data=True)])
+        #labels = nx.get_edge_attributes(graph, 'weight')
         nx.draw(graph, layout, with_labels=True)
         nx.draw_networkx_edge_labels(graph,pos=layout, edge_labels=labels)
     return graph

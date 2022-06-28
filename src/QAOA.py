@@ -8,7 +8,7 @@ import networkx as nx
 
 from qiskit import QuantumCircuit
 from qiskit import Aer
-from graph import *
+from .graph import *
 
 def cut(x: str, graph: nx.Graph):
     """
