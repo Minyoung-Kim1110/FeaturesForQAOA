@@ -50,7 +50,7 @@ def qaoa_circuit(graph, n_wires, edge=None, n_layers=1):
     return qml.expval(qml.Hermitian(pauli_z_2, wires = edge))
 
 
-def qaoa_maxcut(graph, n_wires: int, net: DenseNet, n_layers=1):
+def qaoa_maxcut(graph, n_wires: int, net: DenseNet, n_layers=1, print_log = True):
     dev = qml.device("default.qubit", wires=n_wires, shots=128)
 
     # initialize the parameters near zero
@@ -60,7 +60,7 @@ def qaoa_maxcut(graph, n_wires: int, net: DenseNet, n_layers=1):
     def sin_square(x, y):
         return 1- np.dot(x, y)**2/np.dot(x, x)/np.dot(y,y)
     # minimize the negative of the objective function
-    def objective(net: DenseNet, print_log=True):
+    def objective(net: DenseNet):
         neg_obj = 0
         dists = np.zeros((n_wires,n_wires))
         zzs = np.zeros_like(dists)
@@ -72,8 +72,6 @@ def qaoa_maxcut(graph, n_wires: int, net: DenseNet, n_layers=1):
                 vv = (v * v).sum()
                 dist = 1 - uv * uv / (uu * vv)
                 dists[i][j], dists[j][i] = dist.item(), dist.item()
-                # dist = sin_square(net(i).detach().numpy(), net(j).detach().numpy())
-                # dists[i][j], dists[j][i] = dist.item(), dist.item()
                 circuit = qml.QNode(qaoa_circuit, dev, interface = "torch")
                 zz = circuit(edge = (i, j), graph = graph, n_wires = n_wires, n_layers=n_layers)
                 zzs[i][j], zzs[j][i] = zz.item(), zz.item()
@@ -81,7 +79,6 @@ def qaoa_maxcut(graph, n_wires: int, net: DenseNet, n_layers=1):
                     neg_obj -= dist * (1-zz) / 2
                 else:
                     neg_obj -= - dist*zz
-                    #neg_obj -= -dist*(2+zz)
         if print_log:
             print("embed = ")
             for i in range(3):
@@ -130,7 +127,7 @@ for i in range(n_wires):
             graph.append((i, j))
 print(f"graph = {graph}")
 net = DenseNet(data, n_wires, n_layers = 3)
-max_cut = qaoa_maxcut(graph, n_wires, net, n_layers=3)
+max_cut = qaoa_maxcut(graph, n_wires, net, n_layers=3, print_log=True)
 print(f"print final result {max_cut}")
 # results
 

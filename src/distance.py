@@ -83,5 +83,7 @@ class QuantumKernelMap():
         feature_map =ZZFeatureMap(feature_dimension=num_features, reps=2, entanglement="linear")
         kernel = QuantumKernel(feature_map=feature_map, quantum_instance=self.backend)
         ret = kernel.evaluate(data)
-        np.save("./mat.npy", np.ones_like(ret) - ret)
+        #np.save("./mat.npy", np.ones_like(ret) - ret)
         return np.ones_like(ret)-ret
+    
+    
