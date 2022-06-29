@@ -9,7 +9,7 @@ import networkx as nx
 from qiskit import QuantumCircuit, transpile
 from qiskit.tools.monitor import job_monitor
 from qiskit import Aer
-from graph import *
+from .graph import *
 
 def cut(x: str, graph: nx.Graph):
     """
@@ -105,14 +105,14 @@ class Qaoa:
         betas, gammas = params[:len(params)//2], params[len(params)//2:]
         
         qc = self.create_qaoa_circ(betas, gammas)
-        # counts = self.backend.run(qc, seed_simulator=10, 
-        #                     nshots=self.shots).result().get_counts()
-        transpiled_circuit = transpile(qc, self.backend, optimization_level=3)
-        job = self.backend.run(transpiled_circuit)
-        job_monitor(job, interval=2)
+        counts = self.backend.run(qc, seed_simulator=10, 
+                             nshots=self.shots).result().get_counts()
+        # transpiled_circuit = transpile(qc, self.backend, optimization_level=3)
+        # job = self.backend.run(transpiled_circuit)
+        # job_monitor(job, interval=2)
 
-        results = job.result()
-        counts = results.get_counts()
+        # results = job.result()
+        # counts = results.get_counts()
         
         return self.compute_expectation(counts)
 
