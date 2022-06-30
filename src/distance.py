@@ -1,5 +1,9 @@
-"""distance map and quantum feature map implemented 
-
+"""
+Author: Minyoung Kim ( June. 30, 2022)
+2022 Hackaton 
+Team: ThankQ
+description: 
+distance functions and calculating kernel from quantum feature map is implemented 
 """
 import numpy as np
 
@@ -69,21 +73,38 @@ class QuantumKernelMap():
         """
         self.backend = backend
 
-    def run(self, data:np.array):
-        """from given data, get quantum kernel
+    def get_kernel(self, data:np.array):
+        """from given data, get kernel with ZZFeatureMap
         
-
         Args:
+            data (np.array): N by M matrix, N: number of data points, M: number of features
+
+        Returns:
+            kernel matrix(np.array)
+        """
+        num_datapt, _  = data.shape
+        feature_map =ZZFeatureMap(feature_dimension=num_features, reps=2, entanglement="linear")
+        kernel = QuantumKernel(feature_map=feature_map, quantum_instance=self.backend)
+        ret = kernel.evaluate(data)
+        return ret 
+
+    def get_distance(self, data:np.array, save=False):
+        """Get adjacency matrix from kernel 
+        Args: 
             data (np.array): N by M matrix, N: number of data points, M: number of features
 
         Returns:
             adjacency matrix(np.array)
         """
-        num_datapt, num_features = data.shape
-        feature_map =ZZFeatureMap(feature_dimension=num_features, reps=2, entanglement="linear")
-        kernel = QuantumKernel(feature_map=feature_map, quantum_instance=self.backend)
-        ret = kernel.evaluate(data)
-        #np.save("./mat.npy", np.ones_like(ret) - ret)
-        return np.ones_like(ret)-ret
+        ret = self.get_kernel(data)
+        ret = np.ones_like(ret)-ret
+        #Redundant values in diagonal part 
+        np.fill_diagonal(ret, 0)
+
+        if save: 
+            np.save("../results/kernel.npy", ret)
+            print("adjacency matrix is saved in /results/kernel.npy")
+        
+        return ret
     
     
