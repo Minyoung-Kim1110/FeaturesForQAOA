@@ -1,9 +1,17 @@
-"""Some visualization functions 
-"""
+''' 
+Author: Minyoung Kim ( Jul. 1, 2022)
+2022 Hackaton 
+Team: ThankQ
+description: 
+    plot functions for matrix 
+    This is used to plot adjacency matrix
+''' 
+
 
 import matplotlib.pyplot as plt
 import itertools
 import numpy as np
+
 def plot(cm:np.array, labels= True, normalize = False):
     """plot 2d matrix using colormap blues 
 
