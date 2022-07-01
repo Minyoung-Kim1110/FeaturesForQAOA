@@ -1,7 +1,9 @@
 ''' 
-from csv or npy data to graph 
-for QAOA 
-
+Author: Minyoung Kim ( Jul. 1, 2022)
+2022 Hackaton 
+Team: ThankQ
+description: 
+    generate nx.graph from data and distance functions 
 ''' 
 import networkx as nx
 import numpy as np 
