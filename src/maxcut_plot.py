@@ -7,7 +7,7 @@ description:
     Save data in results folder
     results from fake backend is saved in '../result/max_cut_fake_backend.txt'
     results from real backend is saved in '../result/max_cut_{backend}.txt' 
-    
+
 Execute: 
     in the src folder, use below command 
     python maxcut_plot.py false
@@ -65,7 +65,8 @@ def save_data():
         file.write("\n========================================================================================================\n")
 
 def run_qaoa():
-    for func in data_num: 
+    #Run QAOA with distance functions in original space
+    for func in distance_func_list: 
         graph = generate_graph(data[:data_num], func, draw=False)
         for p in p_list: 
             print(f"p value is {p} and using function {func.__name__}")
@@ -77,6 +78,31 @@ def run_qaoa():
             print("Finish minimize")
             print(res.fun)
             save_data()
+    #Run QAOA in feature space 
+    #Check distance matrix is generated 
+    from os.path import exists 
+    file_exists = exists("../results/adj_mat.npy")
+    if file_exists:
+        #If file exists, use that file 
+        mat = np.load("../results/adj_mat.npy")
+    else: 
+        #else, use quantum kernel map to calculate distance
+        kernel = QuantumKernelMap(backend)
+        mat = kernel.get_distance(data[:data_num])
+        np.save("../results/adj_mat.npy", mat)
+    graph = generate_graph_from_numpy(mat, draw=False)
+    for p in p_list: 
+        print(f"p value is {p} and using function QuantumKernelMap")
+        params = [1.0 for _ in range(2*p)]
+        qaoa = Qaoa(graph=graph, backend=backend)
+        res = minimize(qaoa.execute_circ, 
+                            params, 
+                            method='COBYLA')
+        print("Finish minimize")
+        print(res.fun)
+        save_data()
+
+    
 
 if __name__ == "__main__":
     import sys 
