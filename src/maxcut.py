@@ -10,8 +10,8 @@ description:
 
 Execute: 
     in the src folder, use below command 
-    python maxcut_plot.py false
-or  python maxcut_plot.py true
+    python maxcut.py false
+or  python maxcut.py true
 
 Reference:
 IBM Quantum. https://quantum-computing.ibm.com/, 2021
