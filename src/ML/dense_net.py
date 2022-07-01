@@ -1,6 +1,12 @@
+''' 
+Author: Jaehwan Kim ( Jul. 1, 2022)
+2022 Hackaton 
+Team: ThankQ
+description: 
+    Generate Neural Network (dense net) with QAOA parameter betas and gammas
+''' 
 import torch
 import torch.nn as nn
-from omegaconf import OmegaConf
 
 class DenseNet(nn.Module):
     def __init__(self, data: torch.Tensor, n_wires: int = 5, n_layers: int = 1):
