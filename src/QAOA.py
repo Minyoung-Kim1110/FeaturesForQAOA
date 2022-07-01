@@ -1,8 +1,14 @@
-'''
-From graph, 
-use QAOA tutorial, calculate results 
-output: classification label
-''' 
+"""
+Author: Jaehwan Kim, Minyoung Kim ( June. 30, 2022)
+2022 Hackaton 
+Team: ThankQ
+description: From graph, use qaoa to solve max-cut problem. 
+
+Reference:
+IBM Quantum. https://quantum-computing.ibm.com/, 2021
+qiskit https://qiskit.org/textbook/ch-applications/qaoa.html
+
+"""
 from typing import List, Dict
 import networkx as nx
 
@@ -27,32 +33,36 @@ def cut(x: str, graph: nx.Graph):
         obj: float
             Objective
     """
-    cnt = 0
+    cnt = 0.
     for i, j in graph.edges():
         if x[i] != x[j]:
-            cnt += 1
+            cnt += 1.
 
     return cnt
 
 
 class Qaoa:
     def __init__(self, graph: nx.Graph, backend=None, backend_type: str = 'qasm_simulator', shots: int = 512):
+        """_summary_
+
+        Args:
+            graph (nx.Graph): Graph to solve 
+            backend (IBMQBackend, optional):  Defaults to None.
+            backend_type (str, optional): simulator type . Defaults to 'qasm_simulator'.
+            shots (int, optional): shots for backend. Defaults to 512.
+        """
         self.graph = graph
-        #self.backend = Aer.get_backend(backend_type)
-        self.backend = backend
-        #self.backend.shots = shots
+        self.backend = backend if backend is not None else  Aer.get_backend(backend_type) 
         self.shots = shots
 
     def compute_expectation(self, counts: Dict[str, int]):
         """
         Computes expectation value based on measurement results
+        - maxcut value 
         
         Args:
             counts: dict
                     key as bitstring, val as count
-            
-            graph: networkx graph
-            
         Returns:
             avg: float
                 expectation value
@@ -69,21 +79,22 @@ class Qaoa:
     def create_qaoa_circ(self, betas: List[float], gammas: List[float]):
         """
         Creates a parametrized qaoa circuit
-        
+        For further explanation about QAOA, refer to https://qiskit.org/textbook/ch-applications/qaoa.html
         Args:  
-            graph: networkx graph
-            theta: list
-                unitary parameters
+
+            betas(List[float]): Parameters for problem unitary operator
+            gammas(List[float]):Parameters for mixer unitary operator 
                         
         Returns:
             qc: qiskit circuit
         """
         assert(len(betas) == len(gammas))
         
+        #Generate quantum circuit 
         nqubits = len(self.graph.nodes())
         qc = QuantumCircuit(nqubits)
         
-        # initial_state
+        # Set initial_state with hadamard gate
         for i in range(0, nqubits):
             qc.h(i)
         
@@ -95,9 +106,8 @@ class Qaoa:
             # mixer unitary
             for i in range(0, nqubits):
                 qc.rx(2 * gamma, i)
-
+        #Measure
         qc.measure_all()
-
         return qc
 
     # Finally we write a function that executes the circuit on the chosen backend
@@ -105,8 +115,7 @@ class Qaoa:
         betas, gammas = params[:len(params)//2], params[len(params)//2:]
         
         qc = self.create_qaoa_circ(betas, gammas)
-        counts = self.backend.run(qc, seed_simulator=10, 
-                             nshots=self.shots).result().get_counts()
+        counts = self.backend.run(qc, seed_simulator=10, nshots=self.shots).result().get_counts()
         # transpiled_circuit = transpile(qc, self.backend, optimization_level=3)
         # job = self.backend.run(transpiled_circuit)
         # job_monitor(job, interval=2)
@@ -117,25 +126,43 @@ class Qaoa:
         return self.compute_expectation(counts)
 
 if __name__ == "__main__":
+    #import minimize module
+    from scipy.optimize import minimize
+
+
     def get_example_graph():
+        """generate sample graph 
+
+        Returns:
+            graph(nx.Graph): generated graph with 4 nodes and 4 edges with edge weight = 1 
+        """
         graph = nx.Graph()
         graph.add_nodes_from([0, 1, 2, 3])
         graph.add_edges_from([(0, 1), (1, 2), (2, 3), (3, 0)])
         nx.draw(graph, with_labels=True, alpha=0.8, node_size=500)
         return graph
 
-    from scipy.optimize import minimize
-
-    data = np.load("../data/drug145_5.npy")
-    data = data[:4, 1:]
-    def norm(x):
-        return np.sqrt(np.dot(x,x))
-    cosftn = lambda x, y : np.dot(x, y)/ norm(x)/norm(y)
-    Euclidean = lambda x, y : np.sqrt(np.dot(x-y, x-y))
-    graph = generate_graph(data, cosftn)
     
-    #graph = get_example_graph()
-    #params length = 2p 
+    def get_graph_from_data(filepath:str, node_num:int = 4  , dist_ftn = lambda x, y : np.sqrt(np.dot(x-y, x-y))):
+        """generate sample graph from given data 
+
+        Args:
+            filepath (str): _description_
+            node_num (int, optional): number of data points (node of graph). Defaults to 4.
+            dist_ftn (ftn, optional): distance function.
+
+        Returns:
+            graph(nx.Graph): generated graph with given node_num and edge weight is calculated by distance function
+        """
+        data = np.load(filepath)
+        data = data[:node_num, 1:]
+        graph = generate_graph(data, dist_ftn)
+        return graph
+    
+    filepath = "../data/drug145_5.npy"
+    
+    graph = get_example_graph()
+    #params length = 2p [betas, gammas]
     params = [1.0, 1.0]
     qaoa = Qaoa(graph)
 
