@@ -1,14 +1,20 @@
-"""Use pennylane and pytorch library 
-train network such that it maximizes the performance of QAOA
+''' 
+Author: Jaehwan Kim ( Jul. 1, 2022)
+2022 Hackaton 
+Team: ThankQ
+description: 
 
-"""
-#from locale import nl_langinfo
+Reference: 
+    Pennylane max-cut tutorial https://pennylane.ai/qml/demos/tutorial_qaoa_maxcut.html
+''' 
+from typing import List, Tuple
 import pennylane as qml
 import torch.nn as nn
 from torch.optim import Adam
 import torch
 from dense_net import DenseNet
 import numpy as np
+from utils import *
 
 
 # unitary operator U_B with parameter beta
@@ -25,16 +31,27 @@ def U_C(gamma, graph):
         qml.RZ(gamma, wires=wire2)
         qml.CNOT(wires=[wire1, wire2])
 
-def bitstring_to_int(bit_string_sample):
-    bit_string = "".join(str(bs) for bs in bit_string_sample)
-    return int(bit_string, base=2)
-
-
+#Set pauli_z matrix 
+#|1,  0|
+#|0, -1|
 pauli_z = torch.tensor([[1., 0.], [0., -1.]], requires_grad=False).to(torch.float64)
 pauli_z_2 = torch.kron(pauli_z, pauli_z)
 
 
-def qaoa_circuit(graph, n_wires, edge=None, n_layers=1):
+def qaoa_circuit(graph:List[Tuple], n_wires: int, edge=None, n_layers=1):
+    """from graph, generate quantum circuit 
+    And execute that circuit and get the expectation value 
+
+    Args:
+        graph (List[Tuple]): _description_
+        n_wires (int): _description_
+        edge (_type_, optional): _description_. Defaults to None.
+        n_layers (int, optional): _description_. Defaults to 1.
+
+    Returns:
+        value(float):Return the expectation value 
+    """
+    
     # apply Hadamards to get the n qubit |+> state
     for wire in range(n_wires):
         qml.Hadamard(wires=wire)
@@ -56,9 +73,7 @@ def qaoa_maxcut(graph, n_wires: int, net: DenseNet, n_layers=1, print_log = True
     # initialize the parameters near zero
     print(f"initial params = {net.betas}, {net.gammas}")
 
-    # Define distance function 
-    def sin_square(x, y):
-        return 1- np.dot(x, y)**2/np.dot(x, x)/np.dot(y,y)
+    
     # minimize the negative of the objective function
     def objective(net: DenseNet):
         neg_obj = 0
@@ -67,11 +82,9 @@ def qaoa_maxcut(graph, n_wires: int, net: DenseNet, n_layers=1, print_log = True
         for i in range(n_wires):
             for j in range(i+1, n_wires):
                 u, v = net(i), net(j)
-                uv = (u * v).sum()
-                uu = (u * u).sum()
-                vv = (v * v).sum()
-                dist = 1 - uv * uv / (uu * vv)
+                dist = sin_square(u,v)
                 dists[i][j], dists[j][i] = dist.item(), dist.item()
+                #make circuit using torch 
                 circuit = qml.QNode(qaoa_circuit, dev, interface = "torch")
                 zz = circuit(edge = (i, j), graph = graph, n_wires = n_wires, n_layers=n_layers)
                 zzs[i][j], zzs[j][i] = zz.item(), zz.item()
@@ -93,7 +106,7 @@ def qaoa_maxcut(graph, n_wires: int, net: DenseNet, n_layers=1, print_log = True
         return neg_obj
 
     # initialize optimizer: Adagrad works well empirically
-    opt = Adam(net.parameters(), lr=0.01)
+    opt = Adam(net.parameters(), lr=0.001)
     net.train()
 
     # optimize parameters in objective
@@ -111,26 +124,27 @@ def qaoa_maxcut(graph, n_wires: int, net: DenseNet, n_layers=1, print_log = True
 
 # perform qaoa on our graph with p=1,2 and
 # keep the bitstring sample lists
+if __name__ == "__main__":
+    n_wires = 4 #node number
+    n_layers = 1
 
-n_wires = 4
-n_layers = 1
+    arr = np.load("../data/drug145_5.npy")[:n_wires, :]
+    label = arr[:, 0]
+    data = arr[:, 1:]
 
-arr = np.load("../data/drug145_5.npy")[:n_wires, :]
-label = arr[:, 0]
-data = arr[:, 1:]
+    # generate bipartite graph from labels
+    graph = []
+    for i in range(n_wires):
+        for j in range(i+1, n_wires):
+            if label[i] != label[j]:
+                graph.append((i, j))
+    print(f"graph = {graph}")
 
-# generate bipartite graph from labels
-graph = []
-for i in range(n_wires):
-    for j in range(i+1, n_wires):
-        if label[i] != label[j]:
-            graph.append((i, j))
-print(f"graph = {graph}")
-net = DenseNet(data, n_wires, n_layers = 3)
-max_cut = qaoa_maxcut(graph, n_wires, net, n_layers=3, print_log=True)
-print(f"print final result {max_cut}")
+    net = DenseNet(data, n_wires, n_layers = 3)
+    max_cut = qaoa_maxcut(graph, n_wires, net, n_layers=3, print_log=True)
+    print(f"print final result {max_cut}")
+
 # results
-
 # embed = 
 # tensor([-0.0215, -0.1740, -0.0336], grad_fn=<AddBackward0>)
 # tensor([ 0.0998, -0.0352,  0.0730], grad_fn=<AddBackward0>)
